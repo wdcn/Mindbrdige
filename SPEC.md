@@ -1,7 +1,7 @@
 # mindbridge.ngo — Site Specification
 
-Last updated: 2026-09-26
-Status: pre-launch. Two builds live in this repo; **version 2 is the current direction.**
+Last updated: 2026-09-27
+Status: pre-launch. Single-page React site, deployed on Vercel from GitHub (`wdcn/Mindbrdige`, branch `main`).
 
 ---
 
@@ -27,39 +27,36 @@ The site has three jobs, in priority order:
 
 ```
 Mindbridge/
-├── SPEC.md                 This file
-├── DESIGN.md               Visual spec used for version 1 (dark "void" style)
-├── README.md               Version 1: run, deploy, TODOs
-├── index.html …            VERSION 1 — static HTML/CSS/JS (repo root)
-│   ├── our-mission/  contact/  support-us/  experiences/  get-help/  404.html
-│   ├── about/ programs/ get-involved/ donate/   Redirects from the first draft (safe to delete)
-│   ├── assets/css  assets/js  assets/fonts  assets/img
-│   └── CNAME  robots.txt  sitemap.xml  .nojekyll
-└── v2/                     VERSION 2 — React + Vite + Tailwind + TypeScript single page
-    ├── README.md
-    ├── index.html  package.json  vite.config.ts  tsconfig.json
-    ├── public/favicon.svg
-    └── src/
-        ├── content.ts                 ALL copy, contact details, links, video URL
-        ├── App.tsx                    Page order
-        ├── components/
-        │   ├── BackgroundVideo.tsx    Hero video with fade-in/out manual loop
-        │   ├── Constellation.tsx      Triangle-particle brain / bridge animation
-        │   ├── DonateForm.tsx         Frequency + amount picker
-        │   ├── Nav.tsx  Hero.tsx  ui.tsx
-        ├── sections/Sections.tsx      All content sections + footer
-        └── styles/fonts.css  theme.css
+├── SPEC.md                        This file
+├── README.md                      Run, build, deploy
+├── index.html                     Page shell, meta tags
+├── package.json  package-lock.json  vite.config.ts  tsconfig.json
+├── public/                        Copied as-is into the build
+│   ├── favicon.svg
+│   ├── robots.txt
+│   └── sitemap.xml
+└── src/
+    ├── content.ts                 ALL copy, contact details, links, video URL
+    ├── App.tsx                    Page order
+    ├── main.tsx
+    ├── components/
+    │   ├── BackgroundVideo.tsx    Hero video with fade-in/out manual loop
+    │   ├── Constellation.tsx      Triangle-particle brain / bridge animation
+    │   ├── DonateForm.tsx         Frequency + amount picker
+    │   ├── Nav.tsx  Hero.tsx  ui.tsx
+    ├── sections/Sections.tsx      All content sections + footer
+    └── styles/fonts.css  theme.css
 ```
+
+Stack: React 19, Vite 7, Tailwind CSS 4, TypeScript. No backend.
 
 ---
 
-## 3. Version 2 (current)
-
-### 3.1 Page structure (single page, top to bottom)
+## 3. Page structure (single page, top to bottom)
 
 | # | Section | Anchor | Content | Visual |
 |---|---------|--------|---------|--------|
-| 0 | Crisis line | — | "In crisis? Call or text 988 any time. In an emergency, call 911. More help" | Small grey text above nav, every load |
+| 0 | Crisis line | — | "In crisis? Call or text 988 any time. In an emergency, call 911. More help" | Small grey text above nav |
 | 1 | Nav | — | Logo "MindBridge"; Home, Our Mission, Contact, Support Us; **Donate today** pill | Mobile: "Menu" toggle with frosted panel |
 | 2 | Hero | `#top` | H1 "Mental wellness for *youth,* in words that *make sense.*" + description + **Donate today** | Looping background video, white gradient overlay, fade-rise entrance |
 | 3 | Our story | — | Title + 2 paragraphs | **Brain** constellation, left; text right |
@@ -70,12 +67,13 @@ Mindbridge/
 | 8 | Get in touch | `#contact` | Intro; Phone, Email, Founder email, Mailing address; "based in Washington state" note | Hairline-divided list |
 | 9 | Footer | — | "No translation *needed.*" · "© 2026 MindBridge NGO. MindBridge is a nonprofit based in Washington state." · "MindBridge is not a crisis service. If you are in danger, call 911." | — |
 
-Removed for now (code kept, easy to restore):
+Parked (code kept, easy to restore):
 - **AI service section** ("Use our AI therapeutic service today") — hidden until a chatbot exists. Re-add `<AiService />` in `App.tsx`.
-- **Experiences** — section and nav item removed. Copy remains in `content.ts`.
-- **Support our mission** CTA block — folded away; donate is reachable from nav, hero and `#donate`.
+- **Experiences** — removed from page and nav. Copy remains in `content.ts`.
 
-### 3.2 Visual system
+---
+
+## 4. Visual system
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -93,7 +91,9 @@ Removed for now (code kept, easy to restore):
 - **Layout:** `max-w-7xl`, `px-8`, sections `py-24 md:py-32`, two-column on desktop, stacked on mobile. Story (visual left) and Mission (visual right) alternate sides.
 - **Motion:** hero `fade-rise` (0.8s, 0 / 0.2s / 0.4s delays). Constellations assemble once on first scroll into view.
 
-### 3.3 Interactive components
+---
+
+## 5. Interactive components
 
 **BackgroundVideo** — `requestAnimationFrame` watches `currentTime`/`duration`; fades in over 0.5s at the start and out over 0.5s before the end. On `ended`: opacity 0 → wait 100ms → rewind → play. Positioned `inset: auto 0 0 0; top: 300px` (inset set first so `top` wins). Reduced motion: paused still frame.
 
@@ -106,31 +106,9 @@ Removed for now (code kept, easy to restore):
 
 **DonateForm** — One time / Monthly; $10, $50 (default), $100, $200, Other. Button label reflects choice ("Donate $100 monthly"). If `site.donationUrl` is set, redirects there with `amount` and `frequency` query params; otherwise opens a pre-filled email to info@mindbridge.ngo.
 
-### 3.4 Run and build
-
-```bash
-cd v2
-npm install
-npm run dev       # http://localhost:5173
-npm run build     # static output in v2/dist (relative paths)
-```
-
 ---
 
-## 4. Version 1 (reference build)
-
-Static multi-page site in the repo root, dark "void" theme from `DESIGN.md`: black canvas,
-violet `#8052FF` single action, amber `#FFB829` labels, Inter 200/400/600, animated
-constellations (brain, bridge, voices). Pages: Home, Our Mission, Contact, Support Us,
-Experiences, Get help, 404. Preview with `python3 -m http.server 8000`.
-
-Version 1 has **not** received the version 2 content edits (it still shows the AI service
-section, Experiences, "Healthcare that feels like home", Seattle wording). Treat it as a
-design reference unless it is chosen for launch.
-
----
-
-## 5. Contact details (single source: `v2/src/content.ts`)
+## 6. Contact details (single source: `src/content.ts`)
 
 - Phone: (425) 969-9989
 - Email: info@mindbridge.ngo · Founder: Kunqi.wang@mindbridge.ngo
@@ -139,9 +117,9 @@ design reference unless it is chosen for launch.
 
 ---
 
-## 6. Safety, privacy and accessibility requirements
+## 7. Safety, privacy and accessibility requirements
 
-- Crisis line visible at the top of every page; "Get help now" section reachable from it.
+- Crisis line visible at the top of the page; "Get help now" section reachable from it.
 - Site states it is **not a crisis service** (contact section and footer).
 - No trackers, analytics, cookies or third-party font requests. The only third-party request is the hero video (see open items).
 - Skip link, visible focus rings, semantic headings, `aria-current` on nav, `aria-hidden` on decorative canvases and video.
@@ -150,7 +128,7 @@ design reference unless it is chosen for launch.
 
 ---
 
-## 7. Open items before launch
+## 8. Open items before launch
 
 | Priority | Item | Where |
 |----------|------|-------|
@@ -163,15 +141,13 @@ design reference unless it is chosen for launch.
 | Medium | Decide whether to present justice-involved youth programming | `Sections.tsx` (TODO in Our mission) |
 | Medium | Nav order (Contact before Support Us) vs page order (Support before Contact) | `content.ts → nav` |
 | Low | Add ® to the logo only if the name is a registered trademark | `Nav.tsx` |
-| Low | Social share image (`og:image`, 1200×630) | `v2/index.html` |
-| Low | Analytics, if wanted: choose a cookie-free option (e.g. Plausible, Cloudflare Web Analytics) | `v2/index.html` |
-| Low | Delete v1 redirect folders `about/ programs/ get-involved/ donate/` if v1 is retired | repo root |
+| Low | Social share image (`og:image`, 1200×630) | `index.html` |
+| Low | Analytics, if wanted: choose a cookie-free option (e.g. Plausible, Vercel Web Analytics) | `index.html` |
 
 ---
 
-## 8. Deployment
+## 9. Deployment
 
-- Domain: `mindbridge.ngo` (`CNAME` in repo root).
-- **Version 1:** serve the repo root as-is (GitHub Pages works out of the box).
-- **Version 2:** build in `v2/` and publish `v2/dist` (GitHub Actions Pages workflow, Netlify, or Cloudflare Pages with base directory `v2`, build `npm run build`, output `dist`). Copy `CNAME` into `v2/public/` when switching.
-- Keep the domain's existing email (MX) records unchanged so @mindbridge.ngo mail keeps working.
+- Host: **Vercel**, connected to GitHub `wdcn/Mindbrdige`. Every push to `main` deploys to production.
+- Vercel project settings: Framework **Vite**, Root Directory **empty (repo root)**, build `npm run build`, output `dist`, Node 20+.
+- Domain: add `mindbridge.ngo` and `www.mindbridge.ngo` under Vercel → Settings → Domains and set the DNS records Vercel shows. Leave MX records untouched so @mindbridge.ngo email keeps working.
