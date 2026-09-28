@@ -1,6 +1,6 @@
 # mindbridge.ngo — Site Specification
 
-Last updated: 2026-09-27
+Last updated: 2026-09-27 (Stripe Payment Links)
 Status: pre-launch. Single-page React site, deployed on Vercel from GitHub (`wdcn/Mindbrdige`, branch `main`).
 
 ---
@@ -104,7 +104,7 @@ Parked (code kept, easy to restore):
 - Reduced motion: drawn fully formed and still; pointer push still works.
 - Brain: 10:9 frame, scale 0.5. Bridge: 4:3 frame, scale 0.64, 75% particle density.
 
-**DonateForm** — One time / Monthly; $10, $50 (default), $100, $200, Other. Button label reflects choice ("Donate $100 monthly"). If `site.donationUrl` is set, redirects there with `amount` and `frequency` query params; otherwise opens a pre-filled email to info@mindbridge.ngo.
+**DonateForm** — One time / Monthly; $10, $50 (default), $100, $200, and Other (one-time only). Each choice maps to a **Stripe Payment Link** in `content.ts → stripeLinks`; the button redirects to Stripe's hosted page (no server, no card data on this site). "Other" uses a "customers choose what to pay" link, so the amount is entered on Stripe. Choices without a link fall back to a pre-filled email to info@mindbridge.ngo. Stripe redirects back to `/?donation=success#donate`, which shows a thank-you message in place of the form.
 
 ---
 
@@ -121,7 +121,7 @@ Parked (code kept, easy to restore):
 
 - Crisis line visible at the top of the page; "Get help now" section reachable from it.
 - Site states it is **not a crisis service** (contact section and footer).
-- No trackers, analytics, cookies or third-party font requests. The only third-party request is the hero video (see open items).
+- No trackers, analytics, cookies or third-party font requests. The only third-party request is the hero video (see open items). Payments happen on Stripe's own pages.
 - Skip link, visible focus rings, semantic headings, `aria-current` on nav, `aria-hidden` on decorative canvases and video.
 - `prefers-reduced-motion` respected by hero animations, video and constellations.
 - Text contrast: body `#6F6F6F` on white (about 5:1, passes WCAG AA).
@@ -136,7 +136,8 @@ Parked (code kept, easy to restore):
 | High | Remove or rewrite the **"AI / Therapy"** impact stat and "AI-driven support" in Our story — no AI service exists yet | `content.ts → impact`, `story` |
 | High | Verify impact figures (500+, 12, 5) against records | `content.ts → impact` |
 | High | Verify every crisis line number | `content.ts → help` |
-| High | Connect a donation processor | `content.ts → site.donationUrl` |
+| High | Create Stripe Payment Links (test, then live) and paste them in; turn on Stripe email receipts | `content.ts → stripeLinks`; README |
+| Medium | Monthly donors cancel by email today — consider enabling Stripe's customer portal link | Stripe Dashboard |
 | Medium | Add 501(c)(3) status and EIN (footer, donate area) | `Sections.tsx` |
 | Medium | Decide whether to present justice-involved youth programming | `Sections.tsx` (TODO in Our mission) |
 | Medium | Nav order (Contact before Support Us) vs page order (Support before Contact) | `content.ts → nav` |

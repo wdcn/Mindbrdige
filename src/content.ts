@@ -12,9 +12,29 @@ export const site = {
   // TODO: replace with a video MindBridge owns or has licensed (see README).
   heroVideo:
     "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4",
-  // TODO: donation processor link (Zeffy, Givebutter, Stripe Payment Link...).
-  // Empty = the donate button opens an email with the chosen amount.
-  donationUrl: "",
+};
+
+/**
+ * Stripe Payment Links (static — no server needed). Create each link in the Stripe Dashboard
+ * (Payment Links → New) and paste its URL here. Links are public and safe to commit.
+ * Test-mode links start with https://buy.stripe.com/test_… ; swap to live links before launch.
+ * In each link's "After payment" settings, redirect to: https://mindbridge.ngo/?donation=success#donate
+ * Leave a value empty ("") and that choice falls back to a pre-filled email.
+ */
+export const stripeLinks = {
+  oneTime: {
+    10: "",
+    50: "",
+    100: "",
+    200: "",
+    other: "", // a link with "Customers choose what to pay"
+  } as Record<string, string>,
+  monthly: {
+    10: "",
+    50: "",
+    100: "",
+    200: "",
+  } as Record<string, string>,
 };
 
 export const nav = [
