@@ -7,9 +7,14 @@ export default function Nav() {
   return (
     <header className="relative z-10">
       <nav aria-label="Main" className="mx-auto flex max-w-7xl items-center justify-between px-8 py-6">
-        <a href="#top" className="font-display text-3xl tracking-tight text-[#000000]">
-          {site.name}
-          {/* TODO: add <sup>®</sup> only if "MindBridge" is a registered trademark */}
+        <a href="#top" className="shrink-0" aria-label={`${site.name} home`}>
+          <img
+            src={`${import.meta.env.BASE_URL}brand/mindbridge-logo-horizontal.svg`}
+            alt={site.name}
+            width={469}
+            height={111}
+            className="h-8 w-auto md:h-12"
+          />
         </a>
 
         <ul className="hidden items-center gap-8 md:flex">
