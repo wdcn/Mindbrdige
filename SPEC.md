@@ -1,6 +1,6 @@
 # mindbridge.ngo — Site Specification
 
-Last updated: 2026-09-27 (Stripe Payment Links)
+Last updated: 2026-10-02 (live Stripe link connected)
 Status: pre-launch. Single-page React site, deployed on Vercel from GitHub (`wdcn/Mindbrdige`, branch `main`).
 
 ---
@@ -104,7 +104,7 @@ Parked (code kept, easy to restore):
 - Reduced motion: drawn fully formed and still; pointer push still works.
 - Brain: 10:9 frame, scale 0.5. Bridge: 4:3 frame, scale 0.64, 75% particle density.
 
-**DonateForm** — One time / Monthly; $10, $50 (default), $100, $200, and Other (one-time only). Each choice maps to a **Stripe Payment Link** in `content.ts → stripeLinks`; the button redirects to Stripe's hosted page (no server, no card data on this site). "Other" uses a "customers choose what to pay" link, so the amount is entered on Stripe. Choices without a link fall back to a pre-filled email to info@mindbridge.ngo. Stripe redirects back to `/?donation=success#donate`, which shows a thank-you message in place of the form.
+**DonateForm** — Amount: $10, $50 (default), $100, $200, Other amount. The button opens the live Stripe Payment Link (`content.ts → stripe.donateLink`, "customers choose what to pay") with `prefilled_amount` set from the chosen amount; "Other amount" opens it empty. No server, no card data on this site. Monthly appears only when `stripe.monthlyLinks` has links; until then donors are invited to email. Stripe redirects back to `/?donation=success#donate`, which shows a thank-you message in place of the form.
 
 ---
 
@@ -136,8 +136,8 @@ Parked (code kept, easy to restore):
 | High | Remove or rewrite the **"AI / Therapy"** impact stat and "AI-driven support" in Our story — no AI service exists yet | `content.ts → impact`, `story` |
 | High | Verify impact figures (500+, 12, 5) against records | `content.ts → impact` |
 | High | Verify every crisis line number | `content.ts → help` |
-| High | Create Stripe Payment Links (test, then live) and paste them in; turn on Stripe email receipts | `content.ts → stripeLinks`; README |
-| Medium | Monthly donors cancel by email today — consider enabling Stripe's customer portal link | Stripe Dashboard |
+| High | Confirm the Stripe link's after-payment redirect and email receipts are on; run one real $1 test gift and refund it | Stripe Dashboard |
+| Medium | Monthly giving: add monthly Payment Links (`content.ts → stripe.monthlyLinks`) and a way for donors to cancel (Stripe customer portal) | Stripe Dashboard |
 | Medium | Add 501(c)(3) status and EIN (footer, donate area) | `Sections.tsx` |
 | Medium | Decide whether to present justice-involved youth programming | `Sections.tsx` (TODO in Our mission) |
 | Medium | Nav order (Contact before Support Us) vs page order (Support before Contact) | `content.ts → nav` |

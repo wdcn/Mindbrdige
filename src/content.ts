@@ -15,21 +15,16 @@ export const site = {
 };
 
 /**
- * Stripe Payment Links (static — no server needed). Create each link in the Stripe Dashboard
- * (Payment Links → New) and paste its URL here. Links are public and safe to commit.
- * Test-mode links start with https://buy.stripe.com/test_… ; swap to live links before launch.
- * In each link's "After payment" settings, redirect to: https://mindbridge.ngo/?donation=success#donate
- * Leave a value empty ("") and that choice falls back to a pre-filled email.
+ * Stripe (static — no server needed).
+ * donateLink: a live Payment Link set to "Customers choose what to pay". The form opens it with
+ *   ?prefilled_amount=<cents> so the amount the donor picked here is already filled in on Stripe.
+ *   In the link's settings, set "After payment" → redirect to https://mindbridge.ngo/?donation=success#donate
+ * monthlyLinks: optional fixed-price monthly Payment Links. The Monthly option only appears once at
+ *   least one is filled in. Links are public and safe to commit.
  */
-export const stripeLinks = {
-  oneTime: {
-    10: "",
-    50: "",
-    100: "",
-    200: "",
-    other: "", // a link with "Customers choose what to pay"
-  } as Record<string, string>,
-  monthly: {
+export const stripe = {
+  donateLink: "https://buy.stripe.com/aFa9AMb4EfSUdYHblYeQM00",
+  monthlyLinks: {
     10: "",
     50: "",
     100: "",

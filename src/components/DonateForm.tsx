@@ -1,17 +1,22 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { site, stripeLinks, support } from "../content";
+import { site, stripe, support } from "../content";
 
 type Frequency = "one-time" | "monthly";
 type Returned = "success" | "cancelled" | null;
 
-const MIN = 1;
+const monthlyAvailable = Object.values(stripe.monthlyLinks).some((u) => u.trim());
 
-/** The Stripe Payment Link for this choice, or "" if none is configured yet. */
-function linkFor(frequency: Frequency, amount: number | "other"): string {
-  const table = frequency === "monthly" ? stripeLinks.monthly : stripeLinks.oneTime;
-  return (table[String(amount)] || "").trim();
+/** Where the Donate button goes for this choice, or "" if Stripe isn't set up for it. */
+function checkoutUrl(frequency: Frequency, amount: number | "other"): string {
+  if (frequency === "monthly") return (stripe.monthlyLinks[String(amount)] || "").trim();
+  const base = stripe.donateLink.trim();
+  if (!base) return "";
+  if (amount === "other") return base; // donor types the amount on Stripe's page
+  const url = new URL(base);
+  url.searchParams.set("prefilled_amount", String(amount * 100)); // cents; donor can still change it
+  url.searchParams.set("utm_source", "mindbridge.ngo");
+  return url.toString();
 }
-const anyLinkConfigured = [...Object.values(stripeLinks.oneTime), ...Object.values(stripeLinks.monthly)].some((u) => u.trim());
 
 function Choice({ checked, onSelect, children, name, value }: { checked: boolean; onSelect: () => void; children: ReactNode; name: string; value: string }) {
   return (
@@ -28,7 +33,7 @@ function Choice({ checked, onSelect, children, name, value }: { checked: boolean
   );
 }
 
-/** Reads ?donation=success|cancelled once (set by Stripe's return URLs), then tidies the address bar. */
+/** Reads ?donation=success|cancelled once (set by Stripe's redirect), then tidies the address bar. */
 function useReturnedFromStripe(): [Returned, () => void] {
   const [returned, setReturned] = useState<Returned>(null);
   useEffect(() => {
@@ -48,20 +53,13 @@ export default function DonateForm() {
   const { amounts, defaultAmount } = support.donate;
   const [frequency, setFrequency] = useState<Frequency>("one-time");
   const [amount, setAmount] = useState<number | "other">(defaultAmount);
-  const [other, setOther] = useState("");
   const [returned, dismissReturned] = useReturnedFromStripe();
 
-  const value = amount === "other" ? Math.round(Number(other)) || 0 : amount;
-  const link = linkFor(frequency, amount);
-  // Stripe's "choose what to pay" page asks for the amount itself, so "Other" needs no number here when a link exists.
-  const needsTypedAmount = amount === "other" && !link;
-  const tooSmall = needsTypedAmount && value > 0 && value < MIN;
+  const link = checkoutUrl(frequency, amount);
   const label =
-    amount === "other" && link
-      ? "Continue to donate"
-      : value > 0
-        ? `Donate $${value.toLocaleString("en-US")}${frequency === "monthly" ? " monthly" : ""}`
-        : "Donate";
+    amount === "other"
+      ? "Donate"
+      : `Donate $${amount.toLocaleString("en-US")}${frequency === "monthly" ? " monthly" : ""}`;
 
   function chooseFrequency(f: Frequency) {
     setFrequency(f);
@@ -71,13 +69,13 @@ export default function DonateForm() {
   function submit(e: FormEvent) {
     e.preventDefault();
     if (link) {
-      window.location.assign(link); // Stripe-hosted payment page; card details never touch this site.
+      window.location.assign(link); // Stripe-hosted checkout; card details never touch this site.
       return;
     }
-    if (value <= 0 || tooSmall) return;
-    const subject = `Donation: $${value} ${frequency === "monthly" ? "monthly" : "one time"}`;
-    const body = `Hi MindBridge,\n\nI'd like to give $${value}${frequency === "monthly" ? " each month" : ""}. Please let me know how to complete my gift.\n\nThank you.`;
-    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Fallback when Stripe isn't configured for this choice.
+    const value = amount === "other" ? "" : `$${amount} `;
+    const subject = `Donation: ${value}${frequency === "monthly" ? "monthly" : "one time"}`;
+    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent(subject)}`;
   }
 
   if (returned === "success") {
@@ -100,68 +98,54 @@ export default function DonateForm() {
     <form onSubmit={submit} noValidate className="rounded-[2rem] border border-white/70 bg-[#f4f4f4]/80 p-8 backdrop-blur-xl md:p-10">
       {returned === "cancelled" && (
         <p role="status" className="mb-6 text-sm text-[#6F6F6F]">
-          No payment was made. You can change the amount and try again whenever you're ready.
+          No payment was made. You can try again whenever you're ready.
         </p>
       )}
 
-      <fieldset>
-        <legend className="mb-3 text-sm text-[#6F6F6F]">Frequency</legend>
-        <div className="flex flex-wrap gap-2">
-          <Choice name="frequency" value="one-time" checked={frequency === "one-time"} onSelect={() => chooseFrequency("one-time")}>One time</Choice>
-          <Choice name="frequency" value="monthly" checked={frequency === "monthly"} onSelect={() => chooseFrequency("monthly")}>Monthly</Choice>
-        </div>
-      </fieldset>
+      {monthlyAvailable && (
+        <fieldset className="mb-8">
+          <legend className="mb-3 text-sm text-[#6F6F6F]">Frequency</legend>
+          <div className="flex flex-wrap gap-2">
+            <Choice name="frequency" value="one-time" checked={frequency === "one-time"} onSelect={() => chooseFrequency("one-time")}>One time</Choice>
+            <Choice name="frequency" value="monthly" checked={frequency === "monthly"} onSelect={() => chooseFrequency("monthly")}>Monthly</Choice>
+          </div>
+        </fieldset>
+      )}
 
-      <fieldset className="mt-8">
+      <fieldset>
         <legend className="mb-3 text-sm text-[#6F6F6F]">Amount</legend>
         <div className="flex flex-wrap gap-2">
           {amounts.map((a) => (
             <Choice key={a} name="amount" value={String(a)} checked={amount === a} onSelect={() => setAmount(a)}>${a}</Choice>
           ))}
           {frequency === "one-time" && (
-            <Choice name="amount" value="other" checked={amount === "other"} onSelect={() => setAmount("other")}>Other</Choice>
+            <Choice name="amount" value="other" checked={amount === "other"} onSelect={() => setAmount("other")}>Other amount</Choice>
           )}
         </div>
-        {needsTypedAmount && (
-          <label className="mt-5 flex items-center gap-2 font-display text-3xl">
-            <span aria-hidden="true">$</span>
-            <span className="sr-only">Other amount in US dollars</span>
-            <input
-              type="number"
-              min={MIN}
-              step={1}
-              inputMode="numeric"
-              autoFocus
-              value={other}
-              onChange={(e) => setOther(e.target.value)}
-              placeholder="Amount"
-              aria-describedby={tooSmall ? "amount-hint" : undefined}
-              className="w-40 border-b border-[#6F6F6F] bg-transparent py-1 outline-none focus:border-[#000000]"
-            />
-          </label>
-        )}
-        {tooSmall && (
-          <p id="amount-hint" className="mt-3 text-sm text-[#6F6F6F]">The minimum gift is ${MIN}.</p>
-        )}
-        {amount === "other" && link && (
-          <p className="mt-3 text-sm text-[#6F6F6F]">You'll enter your amount on the next page.</p>
-        )}
+        <p className="mt-3 text-sm text-[#6F6F6F]">
+          {amount === "other"
+            ? "You'll enter your amount on the next page."
+            : "You can still change the amount on the next page."}
+        </p>
       </fieldset>
 
       <button
         type="submit"
-        disabled={!link && (value <= 0 || tooSmall)}
-        className="mt-10 rounded-full bg-[#000000] px-10 py-4 text-base text-white transition-transform hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
+        className="mt-10 rounded-full bg-[#000000] px-10 py-4 text-base text-white transition-transform hover:scale-[1.03]"
       >
         {label}
       </button>
 
       <p className="mt-4 max-w-sm text-xs leading-relaxed text-[#6F6F6F]">
-        {anyLinkConfigured
-          ? link
-            ? `Secure payment by Stripe. You'll get an email receipt.${frequency === "monthly" ? ` To change or cancel a monthly gift, email ${site.email}.` : ""}`
-            : `This option opens an email to ${site.email} so we can help you complete your gift.`
-          : `Online giving is being set up. The button opens an email to ${site.email} so we can help you complete your gift.`}
+        {link
+          ? "Secure payment by Stripe. You'll get an email receipt."
+          : `Online giving isn't set up for this option yet. The button opens an email to ${site.email}.`}
+        {!monthlyAvailable && (
+          <>
+            {" "}Want to give monthly?{" "}
+            <a href={`mailto:${site.email}?subject=${encodeURIComponent("Monthly gift")}`} className="text-[#000000] underline underline-offset-2">Email us</a>.
+          </>
+        )}
       </p>
     </form>
   );
